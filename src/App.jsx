@@ -9,37 +9,45 @@ export default function App() {
     return JSON.parse(localStorage.getItem("todos")) || [];
   });
 
-  const cleanupTodos = () => {
+  // ✅ CLEANUP LOGIC (PURE FUNCTION)
+  const cleanupTodos = (list) => {
     const now = Date.now();
-    setTodos((prev) =>
-      prev
-        .map((todo) => {
-          const age = now - todo.createdAt;
 
-          if (todo.status === "incomplete" && age >= HOURS_24) {
-            return { ...todo, status: "pending" };
-          }
-          return todo;
-        })
-        .filter((todo) => {
-          const age = now - todo.createdAt;
+    return list
+      .map((todo) => {
+        const age = now - todo.createdAt;
 
-          if (todo.status === "complete" && age >= HOURS_24) return false;
-          if (todo.status === "pending" && age >= HOURS_48) return false;
+        if (todo.status === "incomplete" && age >= HOURS_24) {
+          return { ...todo, status: "pending" };
+        }
 
-          return true;
-        })
-    );
+        return todo;
+      })
+      .filter((todo) => {
+        const age = now - todo.createdAt;
+
+        if (todo.status === "complete" && age >= HOURS_24) return false;
+        if (todo.status === "pending" && age >= HOURS_48) return false;
+
+        return true;
+      });
   };
 
+  // ✅ Run cleanup every 1 minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTodos((prev) => cleanupTodos(prev));
+    }, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ Save to localStorage
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
 
-  useEffect(() => {
-    const interval = setInterval(cleanupTodos, 60 * 1000);
-    return () => clearInterval(interval);
-  }, [todos]);
+
 
   const addTodo = () => {
     if (!input.trim()) return;
@@ -62,12 +70,12 @@ export default function App() {
     setTodos(updated);
   };
 
-  
+
 
   return (
     <div className="min-h-screen bg-linear-to-b from-indigo-600 to-indigo-400 flex justify-center px-4 py-6">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
-        
+
         {/* Header */}
         <h1 className="text-2xl font-bold text-center text-indigo-700 mb-4">
           📝 My Tasks
@@ -98,23 +106,21 @@ export default function App() {
             >
               <div>
                 <p
-                  className={`text-sm font-medium ${
-                    todo.status === "complete"
+                  className={`text-sm font-medium ${todo.status === "complete"
                       ? "line-through text-green-600"
                       : "text-gray-800"
-                  }`}
+                    }`}
                 >
                   {todo.work}
                 </p>
 
                 <span
-                  className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${
-                    todo.status === "complete"
+                  className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${todo.status === "complete"
                       ? "bg-green-100 text-green-700"
                       : todo.status === "pending"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
                 >
                   {todo.status}
                 </span>
@@ -134,7 +140,7 @@ export default function App() {
 
         {/* Empty State */}
         {todos.length === 0 && (
-          <p className="text-center text-white/90 mt-8 text-sm">
+          <p className="text-center text-black/90 mt-8 text-sm">
             🎉 No tasks left!
           </p>
         )}
